@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { 
   Cpu, Thermometer, Activity, Power, Radio, Globe, 
   RefreshCw, Sliders, Layers, Wifi, Check, 
-  Smartphone, Zap, Sparkles, Fan, AlertTriangle
+  Smartphone, Zap, Sparkles, Fan, AlertTriangle,
+  Truck, FileSpreadsheet, Upload, Play, Square, MapPin, Database, CheckCircle
 } from 'lucide-react';
 import { COLORS } from '../constants';
 import { UserData, UserRole } from '../types';
@@ -12,7 +13,7 @@ interface IntegrationHubProps {
 }
 
 const IntegrationHub: React.FC<IntegrationHubProps> = ({ userData }) => {
-  const [activeTab, setActiveTab] = useState<'devices' | 'satellite'>('devices');
+  const [activeTab, setActiveTab] = useState<'devices' | 'satellite' | 'cost_free'>('devices');
   const role = userData?.role || UserRole.BUSINESS;
 
   // Tab 1: Devices Simulator State
@@ -35,6 +36,16 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ userData }) => {
   const [scanProgress, setScanProgress] = useState<number>(100);
   const [isScanning, setIsScanning] = useState<boolean>(false);
   const [inspectedNode, setInspectedNode] = useState<{ x: number, y: number, value: string, co2: number } | null>(null);
+
+  // Tab 3: Cost-Free Staging (Zero-Budget Tech Stack)
+  const [isTrackingFleet, setIsTrackingFleet] = useState<boolean>(false);
+  const [fleetVehicle, setFleetVehicle] = useState<'delivery_van' | 'commute_shuttle'>('delivery_van');
+  const [fleetProgress, setFleetProgress] = useState<number>(0);
+  const [fleetLogs, setFleetLogs] = useState<string[]>(['[OSRM INIT] OSM-based routing server ready (Free Tier).', '[GPS WAIT] Click "Start GPX Simulator" to stream coordinates...']);
+  const [sheetUrl, setSheetUrl] = useState<string>('https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvDn8mSC35M-y200427_6g_q-zMw/edit');
+  const [sheetParsed, setSheetParsed] = useState<boolean>(false);
+  const [parsingSheet, setParsingSheet] = useState<boolean>(false);
+  const [sheetsLogs, setSheetsLogs] = useState<string[]>([]);
 
   // Trigger telemetry noise
   useEffect(() => {
@@ -93,6 +104,64 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ userData }) => {
     }, 300);
   };
 
+  // GPX Fleet Tracker simulator
+  useEffect(() => {
+    let interval: any;
+    if (isTrackingFleet) {
+      interval = setInterval(() => {
+        setFleetProgress(prev => {
+          const next = prev >= 100 ? 0 : prev + 10;
+          
+          // Generate a log entry depending on progress
+          const locs = [
+            'Loading Dock A', 
+            'Industrial Bypass Road', 
+            'Intersection 4B (Heavy Traffic)', 
+            'Greenbelt Expressway', 
+            'Port Facility', 
+            'Sorting Center Delta'
+          ];
+          const currentLoc = locs[Math.floor((next / 100) * locs.length) % locs.length];
+          const speed = 45 + Math.floor(Math.sin(next) * 15);
+          const co2Saved = Math.round((next * 0.42) * 10) / 10;
+          
+          const logMsg = `[GPS PUSH] Vehicle ${fleetVehicle === 'delivery_van' ? 'EV-01' : 'SHU-02'} @ ${speed} km/h near ${currentLoc}. Cumulative carbon offset: ${co2Saved}kg CO2e.`;
+          setFleetLogs(prevLogs => [logMsg, ...prevLogs.slice(0, 5)]);
+          
+          return next;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isTrackingFleet, fleetVehicle]);
+
+  // Handle Free Google Sheets Parser Simulation
+  const handleParseGoogleSheet = () => {
+    setParsingSheet(true);
+    setSheetParsed(false);
+    setSheetsLogs([
+      `[API CALL] Pinging Google Sheets API endpoint for spreadsheet...`,
+      `[OAUTH SECURE] Authorized read-only token verified.`,
+    ]);
+    
+    setTimeout(() => {
+      setSheetsLogs(prev => [
+        ...prev,
+        `[PARSING] Streamed metadata: "ESG Ledger Q3" (3 columns, 15 rows).`,
+        `[MAPPING] Identifying row factors... Found 4 Energy rows, 2 Logistics rows.`,
+      ]);
+      
+      setTimeout(() => {
+        setParsingSheet(false);
+        setSheetParsed(true);
+        setSheetsLogs(prev => [
+          ...prev,
+          `[SUCCESS] 15 Ledger rows successfully mapped. Estimated total footprint calculated: 14.82 Metric Tons CO2e.`
+        ]);
+      }, 1000);
+    }, 800);
+  };
+
   // Satellite grid mockup data
   const gridNodes = [
     { x: 1, y: 1, value: "Optimal vegetation canopy", co2: 320 },
@@ -144,6 +213,17 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ userData }) => {
         >
           <Globe size={16} />
           📡 Satellite & Earth Layers
+        </button>
+        <button 
+          onClick={() => setActiveTab('cost_free')}
+          className={`px-5 py-3 font-semibold text-sm border-b-2 transition-all flex items-center gap-2 ${
+            activeTab === 'cost_free' 
+              ? 'border-[#1F4E79] text-[#1F4E79]' 
+              : 'border-transparent text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          <Sparkles size={16} />
+          💡 Cost-Free Staging APIs
         </button>
       </div>
 
@@ -545,6 +625,216 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ userData }) => {
                <p className="opacity-80 leading-normal">
                   Our initial development leverages <strong>Google Earth Engine's Free Developer Tier</strong> and raw ESA Sentinel public repositories. We map coordinate grids onto your dashboard with zero overhead cost!
                </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 3 CONTENT: COST-FREE STAGING APIs */}
+      {activeTab === 'cost_free' && (
+        <div className="space-y-8 animate-fade-in">
+          {/* Zero-Budget Stack Manifesto banner */}
+          <div className="p-6 rounded-3xl bg-emerald-50 border border-emerald-200 text-emerald-950 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <div className="space-y-1">
+              <h3 className="font-bold text-lg flex items-center gap-2 text-emerald-800">
+                <Sparkles size={20} />
+                Zero-Budget ESG Tech Stack Enabled
+              </h3>
+              <p className="text-xs opacity-90 max-w-3xl leading-relaxed">
+                By choosing developer tiers and open-source infrastructure, GreenAI helps you build and pitch your sustainability program with <strong>$0 initial API costs</strong>. We replace premium commercial vendors (Samsara, NetSuite, UtilityAPI) with standard, zero-cost staging APIs.
+              </p>
+            </div>
+            <div className="px-4 py-2 bg-emerald-100 text-emerald-800 font-bold text-xs rounded-xl border border-emerald-300 whitespace-nowrap shadow-sm">
+              Estimated Cost: $0.00 / Mo
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* GPX Fleet Telemetry (OSM Route Optimizer) Card */}
+            <div className="p-6 rounded-3xl bg-white/40 backdrop-blur-xl border border-white/60 shadow-xl flex flex-col justify-between">
+              <div>
+                <div className="flex justify-between items-start mb-6">
+                  <div>
+                    <h3 className="font-bold text-lg text-[#1F4E79] flex items-center gap-2">
+                      <Truck size={20} />
+                      Zero-Cost Fleet Tracking (OSRM / GPX)
+                    </h3>
+                    <p className="text-xs opacity-60">Replaces Samsara/Motive by parsing free mobile GPX logs over OpenStreetMap.</p>
+                  </div>
+                  <span className="text-[10px] bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full font-bold border border-blue-100">
+                    OpenStreetMap API
+                  </span>
+                </div>
+
+                {/* Fleet Simulator Interface */}
+                <div className="bg-slate-50 border border-gray-200/50 rounded-2xl p-4 space-y-4">
+                  <div className="flex gap-3 justify-between items-center text-xs">
+                    <span className="font-semibold text-gray-700">Simulated Vehicle</span>
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => { setFleetVehicle('delivery_van'); setFleetProgress(0); }}
+                        className={`px-3 py-1.5 rounded-lg font-bold text-xs transition-colors ${fleetVehicle === 'delivery_van' ? 'bg-[#1F4E79] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                      >
+                        Electric Van EV-01
+                      </button>
+                      <button 
+                        onClick={() => { setFleetVehicle('commute_shuttle'); setFleetProgress(0); }}
+                        className={`px-3 py-1.5 rounded-lg font-bold text-xs transition-colors ${fleetVehicle === 'commute_shuttle' ? 'bg-[#1F4E79] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                      >
+                        Diesel Shuttle SHU-02
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Route Progress bar */}
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between text-[11px] font-bold text-gray-500">
+                      <span>Simulated Route Progress</span>
+                      <span>{fleetProgress}% Complete</span>
+                    </div>
+                    <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-emerald-500 transition-all duration-500"
+                        style={{ width: `${fleetProgress}%` }}
+                      ></div>
+                    </div>
+                  </div>
+
+                  {/* Terminal log panel */}
+                  <div className="bg-slate-900 rounded-xl p-3 h-36 font-mono text-[10px] text-green-400 overflow-y-auto space-y-1 scrollbar-thin">
+                    {fleetLogs.map((log, idx) => (
+                      <div key={idx} className={idx === 0 ? 'text-white font-semibold' : 'opacity-75'}>
+                        {log}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-6 flex justify-between items-center border-t border-gray-100 mt-6">
+                <span className="text-[11px] text-gray-500 flex items-center gap-1.5">
+                  <MapPin size={13} className="text-[#1F4E79]" />
+                  Active Node routing: <strong>OSRM free engine</strong>
+                </span>
+                <button 
+                  onClick={() => setIsTrackingFleet(!isTrackingFleet)}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold shadow transition-all flex items-center gap-1.5 text-white ${isTrackingFleet ? 'bg-red-500 hover:bg-red-600' : 'bg-[#1F4E79] hover:bg-opacity-90'}`}
+                >
+                  {isTrackingFleet ? (
+                    <>
+                      <Square size={12} />
+                      Stop GPS Simulator
+                    </>
+                  ) : (
+                    <>
+                      <Play size={12} />
+                      Start GPX Simulator
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Google Sheets API Carbon Auditing Card */}
+            <div className="p-6 rounded-3xl bg-white/40 backdrop-blur-xl border border-white/60 shadow-xl flex flex-col justify-between">
+              <div>
+                <div className="flex justify-between items-start mb-6">
+                  <div>
+                    <h3 className="font-bold text-lg text-[#1F4E79] flex items-center gap-2">
+                      <FileSpreadsheet size={20} />
+                      Zero-Cost Google Sheets API Ledger
+                    </h3>
+                    <p className="text-xs opacity-60">Replaces expensive SAP/ERP systems with a standard, shared cloud workbook.</p>
+                  </div>
+                  <span className="text-[10px] bg-green-50 text-green-700 px-2.5 py-1 rounded-full font-bold border border-green-100">
+                    Google Sheets API
+                  </span>
+                </div>
+
+                {/* Spreadsheet UI simulation */}
+                <div className="bg-slate-50 border border-gray-200/50 rounded-2xl p-4 space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold text-gray-700 block">Google Sheets Sharing Link</label>
+                    <div className="flex gap-2">
+                      <input 
+                        type="text"
+                        value={sheetUrl}
+                        onChange={(e) => setSheetUrl(e.target.value)}
+                        className="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-mono outline-none text-gray-700"
+                        placeholder="https://docs.google.com/spreadsheets/..."
+                      />
+                    </div>
+                  </div>
+
+                  {/* Mock spreadsheet visualization */}
+                  <div className="border border-gray-200 rounded-xl overflow-hidden text-[10px] bg-white">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-gray-100 text-gray-600 font-bold border-b border-gray-200">
+                          <th className="p-2 border-r border-gray-200">Date</th>
+                          <th className="p-2 border-r border-gray-200">Activity Type</th>
+                          <th className="p-2 border-r border-gray-200 font-mono">Value</th>
+                          <th className="p-2 text-right">Scope Coefficient</th>
+                        </tr>
+                      </thead>
+                      <tbody className="text-gray-700 font-medium">
+                        <tr className="border-b border-gray-200 hover:bg-gray-50">
+                          <td className="p-2 border-r border-gray-200">2026-07-10</td>
+                          <td className="p-2 border-r border-gray-200">Electricity (Grid kWh)</td>
+                          <td className="p-2 border-r border-gray-200 font-mono">14,250 kWh</td>
+                          <td className="p-2 text-right text-orange-600 font-bold">Scope 2 (Grid)</td>
+                        </tr>
+                        <tr className="border-b border-gray-200 hover:bg-gray-50">
+                          <td className="p-2 border-r border-gray-200">2026-07-12</td>
+                          <td className="p-2 border-r border-gray-200">Fleet Fuel (Diesel Gals)</td>
+                          <td className="p-2 border-r border-gray-200 font-mono">420 Gals</td>
+                          <td className="p-2 text-right text-blue-600 font-bold">Scope 1 (Direct)</td>
+                        </tr>
+                        <tr className="hover:bg-gray-50">
+                          <td className="p-2 border-r border-gray-200 text-gray-400">...</td>
+                          <td className="p-2 border-r border-gray-200 text-gray-400 font-mono">-</td>
+                          <td className="p-2 text-right text-gray-400 font-bold">-</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Parse results terminal */}
+                  {sheetsLogs.length > 0 && (
+                    <div className="bg-slate-900 rounded-xl p-3 font-mono text-[9px] text-green-400 space-y-1">
+                      {sheetsLogs.map((log, idx) => (
+                        <div key={idx} className={log.includes('[SUCCESS]') ? 'text-emerald-300 font-bold' : ''}>
+                          {log}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="pt-6 flex justify-between items-center border-t border-gray-100 mt-6">
+                <span className="text-[11px] text-gray-500 flex items-center gap-1">
+                  <Database size={13} className="text-gray-400" />
+                  Read mode: <strong>Tokenized secure OAuth</strong>
+                </span>
+                <button 
+                  onClick={handleParseGoogleSheet}
+                  disabled={parsingSheet}
+                  className="px-4 py-2 bg-[#1F4E79] hover:bg-opacity-90 text-white font-bold text-xs rounded-xl shadow transition-all flex items-center gap-1.5 disabled:opacity-60"
+                >
+                  {parsingSheet ? (
+                    <>
+                      <RefreshCw size={12} className="animate-spin" />
+                      Parsing Sheet...
+                    </>
+                  ) : (
+                    <>
+                      <Upload size={12} />
+                      Sync & Parse Ledger
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>
