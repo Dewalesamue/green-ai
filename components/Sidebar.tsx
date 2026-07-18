@@ -1,15 +1,16 @@
 import React from 'react';
 import { Leaf, LogOut } from 'lucide-react';
 import { MENU_ITEMS, COLORS } from '../constants';
-import { ViewState } from '../types';
+import { ViewState, UserData } from '../types';
 
 interface SidebarProps {
   currentView: ViewState;
   onNavigate: (view: ViewState) => void;
   onLogout: () => void;
+  userData?: UserData | null;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ currentView, onNavigate, onLogout }) => {
+const Sidebar: React.FC<SidebarProps> = ({ currentView, onNavigate, onLogout, userData }) => {
   return (
     <aside className="fixed left-0 top-0 h-full w-64 p-6 flex flex-col justify-between z-20 hidden md:flex"
            style={{ backgroundColor: 'rgba(255, 255, 255, 0.4)', backdropFilter: 'blur(20px)', borderRight: '1px solid rgba(255,255,255,0.5)' }}>
@@ -49,6 +50,13 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onNavigate, onLogout }) 
       </div>
 
       <div className="px-2">
+        {userData && (
+          <div className="mb-4 px-3 py-2.5 rounded-xl bg-[#1F4E79]/5 border border-[#1F4E79]/10 text-xs flex flex-col gap-0.5">
+            <span className="opacity-50 text-[9px] uppercase tracking-wider font-semibold">Active Scope</span>
+            <span className="font-bold text-[#1F4E79]">{userData.role === 'Individual' ? '🏠 At Home' : userData.role === 'Business' ? '🏢 In the Office' : '🌍 Environmental'}</span>
+            <span className="text-[10px] opacity-50 truncate">{userData.email}</span>
+          </div>
+        )}
         <div className="p-4 rounded-xl bg-white/40 border border-white/50 backdrop-blur-sm mb-6">
           <p className="text-xs font-semibold mb-2 uppercase opacity-70">Impact Score</p>
           <div className="flex items-end gap-1">

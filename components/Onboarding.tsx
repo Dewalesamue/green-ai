@@ -3,12 +3,13 @@ import { ArrowRight, Check, Sparkles } from 'lucide-react';
 import { COLORS } from '../constants';
 
 interface OnboardingProps {
-  onFinish: () => void;
+  onFinish: (energySource: string, target: string) => void;
 }
 
 const Onboarding: React.FC<OnboardingProps> = ({ onFinish }) => {
   const [step, setStep] = useState(0);
   const [analyzing, setAnalyzing] = useState(false);
+  const [selections, setSelections] = useState<string[]>([]);
 
   const steps = [
       {
@@ -25,16 +26,25 @@ const Onboarding: React.FC<OnboardingProps> = ({ onFinish }) => {
       }
   ];
 
-  const handleNext = () => {
+  const handleSelectOption = (opt: string) => {
+      const nextSelections = [...selections, opt];
+      setSelections(nextSelections);
       if (step < steps.length - 1) {
           setStep(step + 1);
       } else {
           setAnalyzing(true);
           // Simulate AI processing
           setTimeout(() => {
-              onFinish();
+              onFinish(nextSelections[0] || 'Grid (Standard)', nextSelections[1] || 'Moderate (-15%)');
           }, 2500);
       }
+  };
+
+  const handleSkip = () => {
+      setAnalyzing(true);
+      setTimeout(() => {
+          onFinish(selections[0] || 'Grid (Standard)', selections[1] || 'Moderate (-15%)');
+      }, 2500);
   };
 
   if (analyzing) {
@@ -42,7 +52,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onFinish }) => {
           <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center">
               <div className="relative mb-8">
                   <div className="w-24 h-24 rounded-full flex items-center justify-center animate-pulse" style={{ backgroundColor: COLORS.primary }}>
-                      <Sparkles className="text-white w-10 h-10 animate-spin-slow" />
+                      <Sparkles className="text-white w-10 h-10" />
                   </div>
                   <div className="absolute inset-0 rounded-full border-4 border-blue-200 animate-ping opacity-20"></div>
               </div>
@@ -50,7 +60,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onFinish }) => {
               <p className="opacity-60 max-w-md">Analyzing regional emission factors, energy mix data, and regulatory benchmarks for your profile.</p>
               
               <div className="mt-8 w-64 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                  <div className="h-full bg-blue-600 rounded-full animate-progress"></div>
+                  <div className="h-full bg-blue-600 rounded-full animate-pulse" style={{ width: '100%' }}></div>
               </div>
           </div>
       );
@@ -75,13 +85,13 @@ const Onboarding: React.FC<OnboardingProps> = ({ onFinish }) => {
                     {currentStep.options.map((opt) => (
                         <button 
                             key={opt}
-                            onClick={handleNext}
+                            onClick={() => handleSelectOption(opt)}
                             className="p-6 rounded-2xl bg-white/50 border border-white/60 hover:bg-white text-left font-medium transition-all hover:scale-[1.02] hover:shadow-lg hover:border-blue-200 focus:ring-2 focus:ring-blue-500/20"
                             style={{ color: COLORS.primary }}
                         >
                             <span className="flex justify-between items-center">
                                 {opt}
-                                <ArrowRight size={16} className="opacity-0 hover:opacity-100" />
+                                <ArrowRight size={16} />
                             </span>
                         </button>
                     ))}
@@ -89,7 +99,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onFinish }) => {
             </div>
 
             <div className="flex justify-start">
-               <button onClick={handleNext} className="text-sm font-semibold opacity-50 hover:opacity-100 transition-opacity">
+               <button onClick={handleSkip} className="text-sm font-semibold opacity-50 hover:opacity-100 transition-opacity">
                    Skip for now
                </button>
             </div>

@@ -6,33 +6,62 @@ import CarbonCalculator from './components/CarbonCalculator';
 import Optimization from './components/Optimization';
 import RenewableIntelligence from './components/RenewableIntelligence';
 import Reports from './components/Reports';
+import IntegrationHub from './components/IntegrationHub';
 import Assistant from './components/Assistant';
 import LandingPage from './components/LandingPage';
 import Auth from './components/Auth';
 import Onboarding from './components/Onboarding';
-import { ViewState, AppStage } from './types';
+import { ViewState, AppStage, UserData, UserRole } from './types';
 
 const App: React.FC = () => {
   const [stage, setStage] = useState<AppStage>(AppStage.LANDING);
   const [currentView, setCurrentView] = useState<ViewState>(ViewState.DASHBOARD);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userData, setUserData] = useState<UserData | null>(null);
 
   // Flow Handlers
   const handleGetStarted = () => setStage(AppStage.AUTH);
-  const handleAuthComplete = () => setStage(AppStage.ONBOARDING);
-  const handleOnboardingFinish = () => setStage(AppStage.APP);
-  const handleLogout = () => setStage(AppStage.LANDING);
+  
+  const handleAuthComplete = (role: UserRole, email: string) => {
+    setUserData({
+      role,
+      email,
+      energySource: 'Grid (Standard)',
+      target: 'Moderate (-15%)'
+    });
+    setStage(AppStage.ONBOARDING);
+  };
+
+  const handleOnboardingFinish = (energySource: string, target: string) => {
+    setUserData(prev => prev ? {
+      ...prev,
+      energySource,
+      target
+    } : {
+      role: UserRole.BUSINESS,
+      email: 'demo@company.com',
+      energySource,
+      target
+    });
+    setStage(AppStage.APP);
+  };
+
+  const handleLogout = () => {
+    setUserData(null);
+    setStage(AppStage.LANDING);
+  };
 
   // Navigation Logic
   const renderView = () => {
     switch (currentView) {
-      case ViewState.DASHBOARD: return <Dashboard />;
-      case ViewState.CALCULATOR: return <CarbonCalculator />;
-      case ViewState.OPTIMIZATION: return <Optimization />;
-      case ViewState.RENEWABLE: return <RenewableIntelligence />;
-      case ViewState.REPORTS: return <Reports />;
-      case ViewState.ALERTS: return <Dashboard />; // Reuse dashboard for alerts for now
-      default: return <Dashboard />;
+      case ViewState.DASHBOARD: return <Dashboard userData={userData} />;
+      case ViewState.CALCULATOR: return <CarbonCalculator userData={userData} setUserData={setUserData} />;
+      case ViewState.OPTIMIZATION: return <Optimization userData={userData} />;
+      case ViewState.RENEWABLE: return <RenewableIntelligence userData={userData} />;
+      case ViewState.REPORTS: return <Reports userData={userData} />;
+      case ViewState.INTEGRATION: return <IntegrationHub userData={userData} />;
+      case ViewState.ALERTS: return <Dashboard userData={userData} />; // Reuse dashboard for alerts for now
+      default: return <Dashboard userData={userData} />;
     }
   };
 
@@ -74,7 +103,7 @@ const App: React.FC = () => {
       <div className="fixed bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-orange-200/20 blur-[100px] pointer-events-none z-0"></div>
 
       {/* Sidebar (Desktop) */}
-      <Sidebar currentView={currentView} onNavigate={setCurrentView} onLogout={handleLogout} />
+      <Sidebar currentView={currentView} onNavigate={setCurrentView} onLogout={handleLogout} userData={userData} />
 
       {/* Main Content Area */}
       <main className="md:pl-64 min-h-screen relative z-10 transition-all duration-300">
@@ -112,7 +141,7 @@ const App: React.FC = () => {
       </main>
 
       {/* Chat Assistant */}
-      <Assistant />
+      <Assistant userData={userData} />
 
     </div>
   );

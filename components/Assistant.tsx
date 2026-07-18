@@ -1,19 +1,33 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageSquare, X, Send, Sparkles, Loader2 } from 'lucide-react';
 import { COLORS } from '../constants';
-import { ChatMessage } from '../types';
+import { ChatMessage, UserData } from '../types';
 import { sendMessageToGemini } from '../services/geminiService';
 
-const Assistant: React.FC = () => {
+interface AssistantProps {
+  userData?: UserData | null;
+}
+
+const Assistant: React.FC<AssistantProps> = ({ userData }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    { 
-        id: 'welcome', 
-        role: 'model', 
-        text: 'Hello! I am GreenAI Assistant. I have analyzed your dashboard. Your emissions are trending down, but there is a spike in natural gas usage this week. How can I assist you?', 
-        timestamp: new Date() 
-    }
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+
+  // Update welcome message dynamically based on user profile
+  useEffect(() => {
+    const scopeName = userData?.role === 'Individual' ? 'At Home' : userData?.role === 'Business' ? 'In the Office' : 'Municipal';
+    const hasCalibrated = !!userData?.calculatedEmissions;
+    const footprintText = hasCalibrated ? `${userData?.calculatedEmissions?.total} tCO2e` : 'uncalibrated';
+    
+    setMessages([
+      { 
+          id: 'welcome', 
+          role: 'model', 
+          text: `Hello! I am your GreenAI advisor. I see you are tracking sustainability ${scopeName} with a ${userData?.target || 'moderate'} target. Your calculated footprint is currently ${footprintText}. How can I assist you with optimization schedules today?`, 
+          timestamp: new Date() 
+      }
+    ]);
+  }, [userData]);
+
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -41,7 +55,7 @@ const Assistant: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const responseText = await sendMessageToGemini(userMsg.text);
+      const responseText = await sendMessageToGemini(userMsg.text, userData);
       const botMsg: ChatMessage = {
         id: (Date.now() + 1).toString(),
         role: 'model',
@@ -82,8 +96,8 @@ const Assistant: React.FC = () => {
              </div>
              <div>
                  <h3 className="font-bold text-sm" style={{ color: COLORS.primary }}>GreenAI Assistant</h3>
-                 <span className="text-xs text-green-600 flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> Online
+                 <span className="text-[10px] text-gray-500 font-medium block">
+                    {userData?.role === 'Individual' ? '🏠 At Home Advisor' : userData?.role === 'Business' ? '🏢 Office Advisor' : '🌍 Regional Advisor'}
                  </span>
              </div>
           </div>

@@ -1,5 +1,5 @@
 import { ChartDataPoint, Recommendation } from './types';
-import { LayoutDashboard, Calculator, Zap, FileText, Sun, Bell } from 'lucide-react';
+import { LayoutDashboard, Calculator, Zap, FileText, Sun, Bell, Cpu } from 'lucide-react';
 
 export const COLORS = {
   primary: '#1F4E79', // Deep Blue
@@ -18,6 +18,7 @@ export const MENU_ITEMS = [
   { id: 'OPTIMIZATION', label: 'Optimization', icon: Zap },
   { id: 'RENEWABLE', label: 'Renewable Intel', icon: Sun },
   { id: 'REPORTS', label: 'Reports & ESG', icon: FileText },
+  { id: 'INTEGRATION', label: 'Integration Hub', icon: Cpu },
   { id: 'ALERTS', label: 'Alerts', icon: Bell },
 ];
 

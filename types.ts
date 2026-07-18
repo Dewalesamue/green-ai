@@ -56,5 +56,30 @@ export enum ViewState {
   OPTIMIZATION = 'OPTIMIZATION',
   RENEWABLE = 'RENEWABLE',
   REPORTS = 'REPORTS',
-  ALERTS = 'ALERTS'
+  ALERTS = 'ALERTS',
+  INTEGRATION = 'INTEGRATION'
+}
+
+export interface UserData {
+  role: UserRole;
+  email: string;
+  energySource: string;
+  target: string;
+  calculatorInputs?: {
+    electricity?: number;
+    gas?: number;
+    mileage?: number;
+    waste?: number;
+    squareFootage?: number;
+    supplierSpend?: number;
+    infrastructureCount?: number;
+    transitRidership?: number;
+    region?: string;
+  };
+  calculatedEmissions?: {
+    total: number;
+    breakdown: { name: string; value: number }[];
+    energyIntensity?: number;
+    projectedCost?: number;
+  };
 }

@@ -1,5 +1,6 @@
 import { GoogleGenAI, Chat } from "@google/genai";
 import { SYSTEM_INSTRUCTION } from '../constants';
+import { UserData } from '../types';
 
 let chatSession: Chat | null = null;
 
@@ -14,7 +15,7 @@ export const initializeChat = async () => {
   try {
     const ai = new GoogleGenAI({ apiKey });
     chatSession = ai.chats.create({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-2.5-flash',
       config: {
         systemInstruction: SYSTEM_INSTRUCTION,
       },
@@ -26,7 +27,7 @@ export const initializeChat = async () => {
   }
 };
 
-export const sendMessageToGemini = async (message: string): Promise<string> => {
+export const sendMessageToGemini = async (message: string, userData?: UserData | null): Promise<string> => {
   if (!chatSession) {
     // Attempt lazy initialization
     const session = await initializeChat();
@@ -37,7 +38,12 @@ export const sendMessageToGemini = async (message: string): Promise<string> => {
 
   try {
     if (chatSession) {
-        const result = await chatSession.sendMessage({ message });
+        let finalMessage = message;
+        if (userData) {
+            const context = `[CONTEXT: User Role is ${userData.role}, target is ${userData.target}, primary energy source is ${userData.energySource}. Carbon footprint is ${userData.calculatedEmissions ? `${userData.calculatedEmissions.total} tCO2e (Intensity: ${userData.calculatedEmissions.energyIntensity})` : 'uncalibrated regional baseline'}. Inputs: ${userData.calculatorInputs ? JSON.stringify(userData.calculatorInputs) : 'none'}. Use this to provide highly tailored carbon reduction advice.]`;
+            finalMessage = `${context}\nUser says: ${message}`;
+        }
+        const result = await chatSession.sendMessage({ message: finalMessage });
         return result.text || "I processed that, but couldn't generate a text response.";
     }
     return "Chat session invalid.";
